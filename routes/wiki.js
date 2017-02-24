@@ -34,13 +34,44 @@ router.get('/:urlTitle', (req,res,next)=>{
 })
 
 router.post('/', (req,res,next)=>{
-  var newPage = Page.build(req.body);
-  newPage.save()
-  .then((savedPage)=> {
-    res.redirect(newPage.route)
+  // var newPage = Page.build(req.body);
+  // newPage.save()
+  // .then((savedPage)=> {
+  //   res.redirect(newPage.route)
 
+  // })
+  // .catch(next);
+
+  return User.findOrCreate({
+    where: {
+      name: req.body.authorName,
+      email: req.body.authorEmail
+     }
   })
-  .catch(next);
+    .spread( (user, wasCreatedBool)=>{
+      Page.create({
+        title: req.body.title,
+        content: req.body.content,
+        status: req.body.status
+      })
+      .then( (createdPage)=>{
+
+      })
+      // if (wasCreatedBool) return user;
+      // console.log(req.body)
+      // return User.create({
+      //   name: req.body.authorName,
+      //   email: req.body.email
+      // })
+    })
+    // .then( user =>{
+    //   return Page.create({
+    //     title: req.body.title,
+    //     content: req.body.content,
+    //   })
+    // })
+    .catch (next);
+
 })
 
 
