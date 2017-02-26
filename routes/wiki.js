@@ -18,8 +18,16 @@ router.get('/add', (req,res,next)=>{
 
 })
 
-router.get('/:urlTitle', (req,res,next)=>{
+router.get('/search/:tag', (req,res,next)=>{
+  Page.findByTag(req.params.tag)
+  .then( pages => {
+    res.render('index', { pages: pages})
+  })
+  .catch(next);
+})
 
+
+router.get('/:urlTitle', (req,res,next)=>{
   Page.findOne({
     where: {urlTitle: req.params.urlTitle}
   })
@@ -27,50 +35,61 @@ router.get('/:urlTitle', (req,res,next)=>{
     if (page === null)
       return next(new Error('That page was not found!'));
 
-    res.render('wikipage', { page: page })
+      return page.getAuthor()
+      .then( author =>{
+        page.author = author;
+        res.render('wikipage',{page:page})
+      })
   })
   .catch(next)
 
 })
 
 router.post('/', (req,res,next)=>{
-  // var newPage = Page.build(req.body);
-  // newPage.save()
-  // .then((savedPage)=> {
-  //   res.redirect(newPage.route)
 
-  // })
-  // .catch(next);
-
-  return User.findOrCreate({
-    where: {
-      name: req.body.authorName,
-      email: req.body.authorEmail
-     }
+  User.findOrCreate({
+    where:{ name: req.body.authorName,
+            email: req.body.authorEmail
+    }
   })
-    .spread( (user, wasCreatedBool)=>{
-      Page.create({
+    .spread ( (user, findBool) =>{
+
+      return Page.create({
         title: req.body.title,
         content: req.body.content,
-        status: req.body.status
+        status: req.body.status,
+        tags: req.body.tags
       })
-      .then( (createdPage)=>{
-
-      })
-      // if (wasCreatedBool) return user;
-      // console.log(req.body)
-      // return User.create({
-      //   name: req.body.authorName,
-      //   email: req.body.email
-      // })
+        .then( createdPage => {
+         return createdPage.setAuthor(user);
+        });
     })
-    // .then( user =>{
-    //   return Page.create({
-    //     title: req.body.title,
-    //     content: req.body.content,
-    //   })
-    // })
-    .catch (next);
+      .then( createdPage=>{
+         res.redirect(createdPage.route)
+          })
+    .catch(next);
+
+
+})
+router.get('/:urlTitle/similar', (req,res,next)=>{
+  Page.findOne({
+    where:{
+      urlTitle: req.params.urlTitle
+    }
+  })
+  .then( page =>{
+    if (page === null){
+      return next(new Error('page was not found'));
+    }
+    return page.findSimilar()
+  })
+  .then (similarPages => {
+    res.render('index', { pages: similarPages })
+  })
+  .catch(next)
+})
+
+router.get('/:urlTitle/edit', (req,res,next)=>{
 
 })
 

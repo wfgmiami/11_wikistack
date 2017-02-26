@@ -5,6 +5,8 @@ const swig = require('swig');
 swig.setDefaults( { cache: false });
 const models = require('./models');
 const wikiRouter = require('./routes/wiki');
+const usersRouter = require('./routes/users');
+
 
 const Page = models.Page;
 const User = models.User;
@@ -29,6 +31,8 @@ app.get('/', (req,res,next)=>{
 })
 
 app.use('/wiki', wikiRouter);
+app.use('/users', usersRouter);
+
 app.use((err,req,res,next)=>{
   console.error(err);
   res.status(500).send(err.message);;
@@ -36,9 +40,9 @@ app.use((err,req,res,next)=>{
 
 const port = process.env.PORT || 3000;
 
-User.sync({force:true})
+User.sync()
   .then(function(){
-    return Page.sync({force:true});
+    return Page.sync();
   })
   .then(function(){
     app.listen(port,function(){
